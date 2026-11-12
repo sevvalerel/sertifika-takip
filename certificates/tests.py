@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from unittest import mock
 
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.forms import modelform_factory
 from django.test import SimpleTestCase, TestCase
@@ -98,6 +99,16 @@ class CertificateModelTests(TestCase):
         )
         self.assertFalse(form.is_valid())
         self.assertIn("domain", form.errors)
+
+    def test_admin_count_uses_singular_noun(self):
+        # Türkçede sayıdan sonra isim tekil kalır: "2 sertifika".
+        for domain in ["a.com", "b.com"]:
+            Certificate.objects.create(domain=domain, customer_name="Acme", expiry_date=TODAY)
+        admin_user = User.objects.create_superuser("admin", password="x")
+        self.client.force_login(admin_user)
+        response = self.client.get("/admin/certificates/certificate/")
+        self.assertContains(response, "2 sertifika\n")
+        self.assertNotContains(response, "2 sertifikalar")
 
     def test_status_methods_use_given_today(self):
         cert = Certificate(domain="a.com", customer_name="Acme", expiry_date=in_days(30))

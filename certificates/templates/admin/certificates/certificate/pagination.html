@@ -1,0 +1,16 @@
+{% load admin_list %}
+{% load i18n %}
+{% comment %}
+Django'nun admin/pagination.html şablonunun bu model için kopyası.
+Tek fark: Türkçede sayıdan sonra isim tekil kalır ("4 sertifika", "4 sertifikalar" değil).
+{% endcomment %}
+<p class="paginator">
+{% if pagination_required %}
+{% for i in page_range %}
+    {% paginator_number cl i %}
+{% endfor %}
+{% endif %}
+{{ cl.result_count }} {{ cl.opts.verbose_name }}
+{% if show_all_url %}<a href="{{ show_all_url }}" class="showall">{% translate 'Show all' %}</a>{% endif %}
+{% if cl.formset and cl.result_count %}<input type="submit" name="_save" class="default" value="{% translate 'Save' %}">{% endif %}
+</p>
