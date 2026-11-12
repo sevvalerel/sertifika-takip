@@ -1,9 +1,12 @@
 from datetime import date, timedelta
 from unittest import mock
 
-from django.test import SimpleTestCase
+from django.core.exceptions import ValidationError
+from django.forms import modelform_factory
+from django.test import SimpleTestCase, TestCase
 
 from certificates import status
+from certificates.models import Certificate
 from certificates.status import (
     EXPIRED,
     EXPIRING_SOON,
@@ -59,3 +62,44 @@ class DaysRemainingTests(SimpleTestCase):
 
     def test_leap_year(self):
         self.assertEqual(days_remaining(date(2028, 3, 1), date(2028, 2, 28)), 2)
+
+
+class CertificateModelTests(TestCase):
+    def test_domain_is_stripped_and_lowercased_on_save(self):
+        cert = Certificate.objects.create(
+            domain="  Example.COM ", customer_name="Acme", expiry_date=TODAY
+        )
+        cert.refresh_from_db()
+        self.assertEqual(cert.domain, "example.com")
+
+    def test_duplicate_with_different_case_fails_full_clean(self):
+        Certificate.objects.create(
+            domain="example.com", customer_name="Acme", expiry_date=TODAY
+        )
+        duplicate = Certificate(
+            domain="EXAMPLE.com", customer_name="Baska", expiry_date=TODAY
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            duplicate.full_clean()
+        self.assertIn("domain", ctx.exception.message_dict)
+
+    def test_duplicate_via_model_form_is_form_error(self):
+        # Admin'in kullandığı yol: 500 yerine form hatası beklenir.
+        Certificate.objects.create(
+            domain="example.com", customer_name="Acme", expiry_date=TODAY
+        )
+        Form = modelform_factory(Certificate, fields="__all__")
+        form = Form(
+            data={
+                "domain": "EXAMPLE.com",
+                "customer_name": "Baska",
+                "expiry_date": "2026-12-01",
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("domain", form.errors)
+
+    def test_status_methods_use_given_today(self):
+        cert = Certificate(domain="a.com", customer_name="Acme", expiry_date=in_days(30))
+        self.assertEqual(cert.days_remaining(TODAY), 30)
+        self.assertEqual(cert.status_label(TODAY), "Yakında dolacak")
