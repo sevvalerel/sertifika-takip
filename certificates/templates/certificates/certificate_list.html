@@ -5,45 +5,124 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sertifika Takip Listesi</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 960px; padding: 0 1rem; color: #222; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { padding: .5rem .75rem; border-bottom: 1px solid #ddd; text-align: left; }
-    th { background: #f5f5f5; }
-    td.days { text-align: right; font-variant-numeric: tabular-nums; }
-    tr.expired td { background: #fde8e8; }
-    tr.expiring_soon td { background: #fff4d6; }
-    tr.valid td { background: #e9f7ec; }
+    :root {
+      color-scheme: dark;
+      --bg: #0e1117;
+      --surface: #161b22;
+      --surface-head: #1c222b;
+      --border: #2a313c;
+      --text: #e6e9ee;
+      --muted: #8b95a5;
+      --accent: #6ea8fe;
+
+      --expired-fg: #f28b82;   --expired-bg: rgba(242, 139, 130, .12);  --expired-bd: rgba(242, 139, 130, .35);
+      --soon-fg: #f6c35b;      --soon-bg: rgba(246, 195, 91, .12);      --soon-bd: rgba(246, 195, 91, .35);
+      --valid-fg: #6fcf97;     --valid-bg: rgba(111, 207, 151, .12);    --valid-bd: rgba(111, 207, 151, .35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .container { max-width: 1040px; margin: 0 auto; padding: 48px 16px; }
+
+    header {
+      display: flex; flex-wrap: wrap; gap: 16px;
+      align-items: flex-end; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    h1 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.01em; }
+    .subtitle { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+
+    .meta { display: flex; align-items: center; gap: 16px; font-size: 14px; color: var(--muted); }
+    .meta strong { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+    .meta a { color: var(--accent); text-decoration: none; }
+    .meta a:hover { text-decoration: underline; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; min-width: 640px; }
+    th, td { padding: 14px 20px; text-align: left; white-space: nowrap; }
+    th {
+      background: var(--surface-head);
+      color: var(--muted);
+      font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .06em;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr + tr td { border-top: 1px solid var(--border); }
+    tbody tr:hover td { background: rgba(255, 255, 255, .02); }
+
+    td.domain { font-weight: 500; }
+    td.muted { color: var(--muted); }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px;
+      border: 1px solid; border-radius: 999px;
+      font-size: 13px; font-weight: 500;
+    }
+    .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .badge.expired       { color: var(--expired-fg); background: var(--expired-bg); border-color: var(--expired-bd); }
+    .badge.expiring_soon { color: var(--soon-fg);    background: var(--soon-bg);    border-color: var(--soon-bd); }
+    .badge.valid         { color: var(--valid-fg);   background: var(--valid-bg);   border-color: var(--valid-bd); }
+
+    .empty { padding: 48px 20px; text-align: center; color: var(--muted); }
+    .empty a { color: var(--accent); }
   </style>
 </head>
 <body>
-  <h1>Sertifika Takip Listesi</h1>
-  <p>Bugün: {{ today|date:"d/m/Y" }}</p>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Sertifika Takip Listesi</h1>
+        <p class="subtitle">Müşteri SSL sertifikalarının bitiş tarihleri</p>
+      </div>
+      <div class="meta">
+        <span>Bugün <strong>{{ today|date:"d/m/Y" }}</strong></span>
+        <a href="{% url 'admin:index' %}">Yönetim paneli</a>
+      </div>
+    </header>
 
-  {% if rows %}
-  <table>
-    <thead>
-      <tr>
-        <th>Alan adı</th>
-        <th>Müşteri</th>
-        <th>Bitiş tarihi</th>
-        <th>Kalan gün</th>
-        <th>Durum</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in rows %}
-      <tr class="{{ row.status }}">
-        <td>{{ row.certificate.domain }}</td>
-        <td>{{ row.certificate.customer_name }}</td>
-        <td>{{ row.certificate.expiry_date|date:"d/m/Y" }}</td>
-        <td class="days">{{ row.days_remaining }}</td>
-        <td>{{ row.status_label }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <p>Henüz sertifika yok. <a href="{% url 'admin:certificates_certificate_add' %}">Admin panelinden ekleyin.</a></p>
-  {% endif %}
+    <div class="card">
+      {% if rows %}
+      <table>
+        <thead>
+          <tr>
+            <th>Alan adı</th>
+            <th>Müşteri</th>
+            <th>Bitiş tarihi</th>
+            <th class="num">Kalan gün</th>
+            <th>Durum</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td class="domain">{{ row.certificate.domain }}</td>
+            <td>{{ row.certificate.customer_name }}</td>
+            <td class="muted">{{ row.certificate.expiry_date|date:"d/m/Y" }}</td>
+            <td class="num">{{ row.days_remaining }}</td>
+            <td><span class="badge {{ row.status }}">{{ row.status_label }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty">Henüz sertifika yok. <a href="{% url 'admin:certificates_certificate_add' %}">Admin panelinden ekleyin.</a></p>
+      {% endif %}
+    </div>
+  </div>
 </body>
 </html>
