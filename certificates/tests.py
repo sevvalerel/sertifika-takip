@@ -172,6 +172,8 @@ class CertificateListViewTests(TestCase):
         self.assertContains(response, "Süresi dolmuş")
         self.assertContains(response, "Yakında dolacak")
         self.assertContains(response, "Geçerli")
+        # Admin'in kabul ettiği formatla aynı (gün/ay/yıl): 11/11/2026.
+        self.assertContains(response, "11/11/2026")
 
     def test_same_expiry_date_sorted_by_domain(self, _now):
         self.create("b.com", 10)
