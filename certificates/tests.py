@@ -131,6 +131,7 @@ class CertificateModelTests(TestCase):
         response = self.client.get("/admin/certificates/certificate/")
         # html=True: boşluk/satır sonu farkını yok sayar, paragraf içeriğini karşılaştırır.
         self.assertContains(response, '<p class="paginator">2 sertifika</p>', html=True)
+        self.assertContains(response, "Sertifika Takip Yönetimi")
 
     def test_status_methods_use_given_today(self):
         cert = Certificate(domain="a.com", customer_name="Acme", expiry_date=in_days(30))
