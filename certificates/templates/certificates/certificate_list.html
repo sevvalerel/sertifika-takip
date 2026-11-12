@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>Sertifika Takip Listesi</title>
+</head>
+<body>
+  <h1>Sertifika Takip Listesi</h1>
+  <p>Bugün: {{ today|date:"d.m.Y" }}</p>
+
+  {% if rows %}
+  <table border="1" cellpadding="4">
+    <thead>
+      <tr>
+        <th>Alan adı</th>
+        <th>Müşteri</th>
+        <th>Bitiş tarihi</th>
+        <th>Kalan gün</th>
+        <th>Durum</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr class="{{ row.status }}">
+        <td>{{ row.certificate.domain }}</td>
+        <td>{{ row.certificate.customer_name }}</td>
+        <td>{{ row.certificate.expiry_date|date:"d.m.Y" }}</td>
+        <td>{{ row.days_remaining }}</td>
+        <td>{{ row.status_label }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Henüz sertifika yok. <a href="{% url 'admin:certificates_certificate_add' %}">Admin panelinden ekleyin.</a></p>
+  {% endif %}
+</body>
+</html>

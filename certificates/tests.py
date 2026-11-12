@@ -1,10 +1,11 @@
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from unittest import mock
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.forms import modelform_factory
 from django.test import SimpleTestCase, TestCase
+from django.urls import reverse
 
 from certificates import status
 from certificates.models import Certificate
@@ -135,3 +136,64 @@ class CertificateModelTests(TestCase):
         cert = Certificate(domain="a.com", customer_name="Acme", expiry_date=in_days(30))
         self.assertEqual(cert.days_remaining(TODAY), 30)
         self.assertEqual(cert.status_label(TODAY), "Yakında dolacak")
+
+
+# İstanbul'da 12 Kasım 2026 öğlen (UTC+3).
+NOON_IN_ISTANBUL = datetime(2026, 11, 12, 9, 0, tzinfo=UTC)
+
+
+@mock.patch("django.utils.timezone.now", return_value=NOON_IN_ISTANBUL)
+class CertificateListViewTests(TestCase):
+    def create(self, domain, days):
+        return Certificate.objects.create(
+            domain=domain, customer_name="Acme", expiry_date=in_days(days)
+        )
+
+    def get_rows(self):
+        response = self.client.get(reverse("certificate_list"))
+        self.assertEqual(response.status_code, 200)
+        return response, response.context["rows"]
+
+    def test_rows_sorted_by_expiry_with_days_and_status(self, _now):
+        self.create("gecerli.com", 31)
+        self.create("dolmus.com", -1)
+        self.create("yakinda.com", 0)
+
+        response, rows = self.get_rows()
+
+        self.assertEqual(
+            [(r["certificate"].domain, r["days_remaining"], r["status_label"]) for r in rows],
+            [
+                ("dolmus.com", -1, "Süresi dolmuş"),
+                ("yakinda.com", 0, "Yakında dolacak"),
+                ("gecerli.com", 31, "Geçerli"),
+            ],
+        )
+        self.assertContains(response, "Süresi dolmuş")
+        self.assertContains(response, "Yakında dolacak")
+        self.assertContains(response, "Geçerli")
+
+    def test_same_expiry_date_sorted_by_domain(self, _now):
+        self.create("b.com", 10)
+        self.create("a.com", 10)
+
+        _, rows = self.get_rows()
+
+        self.assertEqual([r["certificate"].domain for r in rows], ["a.com", "b.com"])
+
+    def test_empty_list_message(self, _now):
+        response, rows = self.get_rows()
+
+        self.assertEqual(rows, [])
+        self.assertContains(response, "Henüz sertifika yok")
+
+    def test_today_uses_istanbul_date_not_utc(self, now):
+        # UTC'de hâlâ 12 Kasım 22:30, ama İstanbul'da 13 Kasım 01:30.
+        now.return_value = datetime(2026, 11, 12, 22, 30, tzinfo=UTC)
+        self.create("dun-doldu.com", 0)  # bitiş: 12 Kasım
+
+        response, rows = self.get_rows()
+
+        self.assertEqual(response.context["today"], date(2026, 11, 13))
+        self.assertEqual(rows[0]["days_remaining"], -1)
+        self.assertEqual(rows[0]["status_label"], "Süresi dolmuş")
