@@ -100,6 +100,27 @@ class CertificateModelTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("domain", form.errors)
 
+    def test_editing_existing_record_does_not_clash_with_itself(self):
+        # Tekillik kontrolü düzenlenen kaydın kendisini "tekrar" saymamalı.
+        cert = Certificate.objects.create(
+            domain="dun.com", customer_name="A", expiry_date=TODAY
+        )
+        Form = modelform_factory(Certificate, fields="__all__")
+        form = Form(
+            instance=cert,
+            data={
+                "domain": "DUN.com",
+                "customer_name": "Ahmet",
+                "expiry_date": "2026-11-12",
+            },
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save()
+        cert.refresh_from_db()
+        self.assertEqual(cert.domain, "dun.com")
+        self.assertEqual(cert.customer_name, "Ahmet")
+        self.assertEqual(Certificate.objects.count(), 1)
+
     def test_admin_count_uses_singular_noun(self):
         # Türkçede sayıdan sonra isim tekil kalır: "2 sertifika".
         for domain in ["a.com", "b.com"]:
