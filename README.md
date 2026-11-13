@@ -133,3 +133,15 @@ Ayrıca sertifikaların çoğunlukla 23:59:59 UTC'de sona erdiği bilgisini sorg
 ## AI oturum kayıtları
 
 [ai-log/](ai-log/) klasöründe Claude Code oturumlarının `/export` çıktıları var. Düzenlenmeden, olduğu gibi eklendi.
+
+## Ekran görüntüleri
+
+**Liste sayfası**
+
+<img width="1677" height="602" alt="Ekran görüntüsü 2026-11-13 122423" src="https://github.com/user-attachments/assets/b9430ed4-5b3c-4064-af7b-23a8f57fce9a" />
+
+
+**Admin paneli**
+
+<img width="1912" height="656" alt="Ekran görüntüsü 2026-11-13 122402" src="https://github.com/user-attachments/assets/39c57d4c-d762-4987-b4ce-77156d917ae1" />
+
