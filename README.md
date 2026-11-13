@@ -106,19 +106,29 @@ Kontrol için: `python manage.py check --deploy`
 
 **İşe nasıl başladın, AI'a ilk ne verdin?**
 
-_(yazılacak)_
+Önce ödev metnini inceleyerek kendi promptumu hazırladım. Bunu doğrudan Claude Code'a vermek yerine tarayıcı üzerinden Claude'a gönderip daha açık ve kapsamlı hale getirmesini istedim.
+
+Daha sonra promptu Claude Code'a ilettim. İlk aşamada kod yazmamasını, gereksinimleri inceleyip belirsiz noktalar hakkında sorular sormasını istedim. Planı onaylamadan uygulamaya geçmemesini belirttim. Önerdiği planı testler, riskler ve proje kapsamı açısından sorguladım. Ayrıca projeyi ne kadar iyi anladığımı ölçmek için bana sorular sormasını da istedim.
 
 **AI'ın yazdığı kodun doğru çalıştığını nasıl kontrol ettin?**
 
-_(yazılacak)_
+Testleri kendi terminalimde çalıştırdım ve uygulamayı yerel ortamda açarak admin panelini ve listeleme ekranını kontrol ettim. Süresi 1 gün geçmiş, bugün sona eren, 30 ve 31 gün sonra sona erecek dört sertifika kaydı oluşturarak sınır durumlarını denedim. Ayrıca aynı alan adını tekrar kaydetmeyi denedim.
+
+Claude bazı kodları bilerek değiştirerek testlerin bu hataları yakalayıp yakalamadığını gösterdi. Ben de test çıktılarındaki başarısızlıkları inceledim. Kod değişikliklerini ve commit içeriklerini kontrol ederek push işlemlerini onayladım.
 
 **Testlerin hangi durumları kapsaması gerektiğine nasıl karar verdin?**
 
-_(yazılacak)_
+Öncelikle uygulamanın iş kurallarını ve sınır durumlarını belirledim. Örneğin, bugün sona eren bir sertifikanın hangi durumda sayılacağı ve 30 günlük sınırın dahil olup olmadığı gibi konuları netleştirdim.
+
+Claude'a önerdiği testlerin neden gerekli olduğunu sordum ve ek test önerilerini değerlendirdim. Anlamadığım test senaryolarını açıklamasını istedim. Ayrıca admin testlerinden biri için daha sağlam bir alternatif olup olmadığını sordum.
 
 **AI'ın yanlış yaptığı ya da yönlendirmen gereken bir an oldu mu, ne yaptın?**
 
-_(yazılacak)_
+Evet. Admin panelinde “4 sertifikalar” şeklinde bir ifade kullanılmıştı. Türkçe açısından doğru olmadığını fark edip düzeltilmesini istedim.
+
+Tarih formatında da bir hata vardı. Claude'un verdiği test talimatında 11.11.2026 formatı kullanılmıştı. Tarihi geçmiş bir sertifikayı nasıl ekleyebileceğimi sorduğumda bu formatın yanlış olduğunu fark ettik ve düzelttik.
+
+Ayrıca sertifikaların çoğunlukla 23:59:59 UTC'de sona erdiği bilgisini sorguladım. Let's Encrypt örneğini araştırdığımızda bu bilginin tüm sertifika otoriteleri için geçerli olmadığını gördük. Commit mesajlarının uzunluğu konusunda da geri bildirim vererek istediğim biçime getirilmesini sağladım.
 
 ## AI oturum kayıtları
 
